@@ -66,26 +66,21 @@ for i in scraping_links:
     print(council_presence)
     council_presence_details = []
     for i in council_presence:
-        print(i.text)
-        # if str(i.text).startswith('Year of Birth'):
-        #     year_of_birth = i[15:]
-        # else:
+        council_presence_details.append(i.text)
+        if len(council_presence_details) >= 2:
+            for j in council_presence_details:
+                if j.startswith('Year of Birth'):
+                    year_of_birth = j[15:]
+                else:
+                    council_service = j[34:]
+        else:
+            year_of_birth = council_presence_details[0][15:]
+    specialization = soup1.find_all(class_="specialization")[0]
 
-        # council_presence_details.append(i.text)
-        # if len(council_presence_details) >= 2:
-        #     for j in council_presence_details:
-        #         if j.startswith('Year of Birth'):
-        #             year_of_birth = j[15:]
-        #         else:
-        #             council_service = j[34:]
-        # else:
-        #     year_of_birth = council_presence_details[0][15:]
-#     specialization = soup1.find_all(class_="specialization")[0]
+    scrape_details.append([name.text, affiliation.text,
+                           fellowship_details.text, year_of_birth, council_service, specialization.text[16:]])
 
-#     scrape_details.append([name.text, affiliation.text,
-#                            fellowship_details.text, year_of_birth, council_service, specialization.text[16:]])
+tweet_df = pd.DataFrame(scrape_details, columns=[
+                        'name', 'affiliation', 'fellow_details', 'year_of_birth', 'council_service', 'specialization'])
 
-# tweet_df = pd.DataFrame(scrape_details, columns=[
-#                         'name', 'affiliation', 'fellow_details', 'year_of_birth', 'council_service', 'specialization'])
-
-# tweet_df.to_csv('results.csv', index=False)
+tweet_df.to_csv('results.csv', index=False)
