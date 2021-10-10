@@ -1,3 +1,4 @@
+from numpy.testing._private.utils import KnownFailureException
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -45,42 +46,67 @@ import time
 
 # links_new = links.copy()
 
-scraping_links = ["https://fellows.ias.ac.in/profile/v/FL1974002",
-                  "https://fellows.ias.ac.in/profile/v/FL1969002"]
-# for i in links_new:
-#     if "https://fellows.ias.ac.in/profile/v/" in i:
-#         scraping_links.append(i)
-#     else:
-#         continue
+import pandas as pd
 
+df = pd.read_csv('/Users/rajathcs/Desktop/Book1.csv')
+
+scraping_links = list(set(df['urls'].tolist()))
 
 scrape_details = []
 
 for i in scraping_links:
     link_code = requests.get(i)
     soup1 = BeautifulSoup(link_code.content, 'lxml')
-    name = soup1.find_all('h1')[0]
-    affiliation = soup1.find_all(class_="affiliation")[0]
-    fellowship_details = soup1.find_all(class_="fellowship")[0]
-    council_presence = soup1.find_all(class_="council-service")
-    print(council_presence)
-    council_presence_details = []
-    for i in council_presence:
-        council_presence_details.append(i.text)
-        if len(council_presence_details) >= 2:
-            for j in council_presence_details:
-                if j.startswith('Year of Birth'):
-                    year_of_birth = j[15:]
-                else:
-                    council_service = j[34:]
-        else:
-            year_of_birth = council_presence_details[0][15:]
-    specialization = soup1.find_all(class_="specialization")[0]
+    fellow_url = i
+    p_tags = soup1.findAll('p')
+    try:
+        name = soup1.find_all('h1')[0]
+        name = name.text
+        fellow_address = str(
+            p_tags[(len(p_tags)-3):(len(p_tags)-1)][0].contents[2]) + str(
+            p_tags[(len(p_tags)-3):(len(p_tags)-1)][0].contents[4])
+        if '@' not in str(
+                p_tags[(len(p_tags)-3):(len(p_tags)-1)][1].contents[1]):
+            fellow_email = str(
+                p_tags[(len(p_tags)-3):(len(p_tags)-1)][1].contents[-2]).strip()
+            if '@' not in fellow_email:
+                fellow_email = ""
+                fellow_number = str(
+                    p_tags[(len(p_tags)-3):(len(p_tags)-1)][1].contents[1]).strip()
+            else:
+                fellow_email = ""
+                fellow_number = ""
+        elif '@' in str(
+                p_tags[(len(p_tags)-3):(len(p_tags)-1)][1].contents[1]):
+            fellow_email = str(
+                p_tags[(len(p_tags)-3):(len(p_tags)-1)][1].contents[1]).strip()
+        affiliation = soup1.find_all(class_="affiliation")[0]
+        affiliation = affiliation.text
+        fellowship_details = soup1.find_all(class_="fellowship")[0]
+        fellowship_details = fellowship_details.text
+        council_presence = soup1.find_all(class_="council-service")
+        council_presence_details = []
+        for i in council_presence:
+            council_presence_details.append(i.text)
 
-    scrape_details.append([name.text, affiliation.text,
-                           fellowship_details.text, year_of_birth, council_service, specialization.text[16:]])
+        specialization = soup1.find_all(class_="specialization")[0]
+        specialization = specialization.text[16:]
+    except:
+        # fellow_url = ""
+        fellow_address = ""
+        fellow_email = ""
+        affiliation = ""
+        fellowship_details = ""
+        council_presence = ""
+        council_presence_details = ""
+        specialization = ""
+        fellow_number = ""
 
-tweet_df = pd.DataFrame(scrape_details, columns=[
-                        'name', 'affiliation', 'fellow_details', 'year_of_birth', 'council_service', 'specialization'])
+    scrape_details.append([fellow_url, name, affiliation,
+                           fellowship_details, council_presence_details, specialization, fellow_address, fellow_number, fellow_email])
 
-tweet_df.to_csv('results.csv', index=False)
+ias_df = pd.DataFrame(scrape_details, columns=[
+    'fellow_url', 'name', 'affiliation', 'fellow_details', 'council_presence_details', 'specialization', 'fellow_address', 'fellow_number', 'fellow_email'])
+
+
+ias_df.to_csv('results.csv', index=False)
